@@ -72,10 +72,10 @@ plt.show()
 
 """bash
 # Untrained model (random predictions)
-python scripts/visualize_predictions.py
+python tools/visualize_predictions.py
 
 # Trained model
-python scripts/visualize_predictions.py --checkpoint checkpoints/best_model.pth
+python tools/visualize_predictions.py --checkpoint checkpoints/best_model.pth
 """
 
 ---
@@ -174,10 +174,10 @@ plt.show()
 
 """bash
 # Untrained model (random attention)
-python scripts/visualize_attention.py
+python tools/visualize_attention.py
 
 # Trained model
-python scripts/visualize_attention.py --checkpoint checkpoints/best_model.pth
+python tools/visualize_attention.py --checkpoint checkpoints/best_model.pth
 """
 
 ---
@@ -312,7 +312,7 @@ for img, mask, pred, iou in worst_samples[:5]:
 Check that data loading and preprocessing work correctly:
 
 """bash
-python scripts/visualize_predictions.py
+python tools/visualize_predictions.py
 """
 
 ### 2. Compare Trained vs Untrained
@@ -320,10 +320,10 @@ See how much the model has learned:
 
 """bash
 # Before training
-python scripts/visualize_attention.py
+python tools/visualize_attention.py
 
 # After training
-python scripts/visualize_attention.py --checkpoint checkpoints/best_model.pth
+python tools/visualize_attention.py --checkpoint checkpoints/best_model.pth
 """
 
 ### 3. Debug with Attention
@@ -354,8 +354,8 @@ plot_multi_layer_attention(model, image, layer_indices=[0, 2, 4, 5])
 - Debug failures and understand learned features
 
 **Scripts:**
-- `scripts/visualize_predictions.py` - Prediction comparison
-- `scripts/visualize_attention.py` - Attention heatmaps
+- `tools/visualize_predictions.py` - Prediction comparison
+- `tools/visualize_attention.py` - Attention heatmaps
 
 **Key insight:** Visualization is essential for understanding and debugging deep learning models. Always visualize before, during, and after training.
 

@@ -43,7 +43,7 @@ The script will:
 ### 3. Verify Setup
 
 """bash
-python scripts/sanity_check.py
+python examples/sanity_check.py
 """
 
 This will verify:
@@ -161,7 +161,7 @@ NUM_CLASSES = 2  # Oxford Pets: background + pet
 ### Visualize Data Augmentations
 
 """bash
-python scripts/visualize_augmentations.py
+python tools/visualize_augmentations.py
 # Outputs to: outputs/augmentations/
 """
 
@@ -171,11 +171,11 @@ Shows original image and augmented versions with labeled techniques.
 
 """bash
 # Visualize predictions from untrained model
-python scripts/visualize_predictions.py
+python tools/visualize_predictions.py
 # Outputs to: outputs/predictions/
 
 # Visualize predictions from trained model
-python scripts/visualize_predictions.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
+python tools/visualize_predictions.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
 """
 
 Shows:
@@ -188,11 +188,11 @@ Shows:
 
 """bash
 # Visualize attention from untrained model
-python scripts/visualize_attention.py
+python tools/visualize_attention.py
 # Outputs to: outputs/attention/
 
 # Visualize attention from trained model (specific layer)
-python scripts/visualize_attention.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --layer 3
+python tools/visualize_attention.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --layer 3
 """
 
 Shows:
