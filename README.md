@@ -54,6 +54,18 @@ This will verify:
 
 ## Training
 
+### Dataset Splits
+
+The Oxford Pets dataset is automatically split as follows:
+
+| Split | Source | Samples | Purpose |
+|-------|--------|---------|---------|
+| **Train** | 80% of trainval.txt | ~2,944 | Model training |
+| **Validation** | 20% of trainval.txt | ~736 | Early stopping, hyperparameter tuning |
+| **Test** | test.txt | 3,669 | Final evaluation only (run once!) |
+
+The split is deterministic (seed=42) so you'll get the same train/val split every time.
+
 ### Basic Training
 
 """bash
@@ -131,6 +143,34 @@ Timing:
   Estimated completion: 2:05 PM
   Total elapsed: 12m 50s
 ✓ Saved best model (mIoU: 0.7456)
+"""
+
+## Final Evaluation
+
+After completing all training and hyperparameter tuning, evaluate your best model on the official test set:
+
+"""bash
+python evaluate.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
+"""
+
+**Important:**
+- The test set should only be used ONCE for final evaluation
+- Run this after all experiments are complete
+- These metrics are your final reported results
+- Do NOT tune hyperparameters based on test performance
+
+**Output:**
+"""
+======================================================================
+FINAL TEST SET RESULTS
+======================================================================
+Pixel Accuracy: 0.9123
+Mean IoU (mIoU): 0.7689
+
+Per-Class IoU:
+  Class 0 (background): 0.8734
+  Class 1 (pet): 0.6644
+======================================================================
 """
 
 ## Configuration

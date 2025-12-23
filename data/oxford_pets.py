@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import functional as TF
 from PIL import Image
 from data.transforms import create_train_transforms, create_val_transforms
-from config import IMAGENET_MEAN, IMAGENET_STD
+from config import IMAGENET_MEAN, IMAGENET_STD, VAL_SPLIT, RANDOM_SEED
 
 
 class OxfordPetsDataset(Dataset):
@@ -16,11 +16,33 @@ class OxfordPetsDataset(Dataset):
         self.samples = self._load_split(root, split)
 
     def _load_split(self, root: str, split: str) -> list[str]:
-        split_file = "trainval.txt" if split == "train" else "test.txt"
-        split_path = os.path.join(root, "annotations", split_file)
-        with open(split_path, "r") as f:
+        if split == "test":
+            split_file = "test.txt"
+            split_path = os.path.join(root, "annotations", split_file)
+            with open(split_path, "r") as f:
+                lines = f.readlines()
+            return [line.strip().split()[0] for line in lines]
+        
+        trainval_file = "trainval.txt"
+        trainval_path = os.path.join(root, "annotations", trainval_file)
+        with open(trainval_path, "r") as f:
             lines = f.readlines()
-        return [line.strip().split()[0] for line in lines]
+        
+        all_samples = [line.strip().split()[0] for line in lines]
+        
+        import random
+        random.seed(RANDOM_SEED)
+        indices = list(range(len(all_samples)))
+        random.shuffle(indices)
+        
+        val_size = int(len(all_samples) * VAL_SPLIT)
+        
+        if split == "train":
+            train_indices = indices[val_size:]
+            return [all_samples[i] for i in train_indices]
+        else:
+            val_indices = indices[:val_size]
+            return [all_samples[i] for i in val_indices]
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -68,9 +90,16 @@ def create_dataloaders(root: str, image_size: int, batch_size: int):
     val_transform = create_val_transforms(image_size)
 
     train_dataset = OxfordPetsDataset(root, "train", image_size, transform=train_transform)
-    val_dataset = OxfordPetsDataset(root, "test", image_size, transform=val_transform)
+    val_dataset = OxfordPetsDataset(root, "val", image_size, transform=val_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
     return train_loader, val_loader
+
+
+def create_test_loader(root: str, image_size: int, batch_size: int):
+    test_transform = create_val_transforms(image_size)
+    test_dataset = OxfordPetsDataset(root, "test", image_size, transform=test_transform)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    return test_loader

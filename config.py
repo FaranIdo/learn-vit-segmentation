@@ -31,5 +31,8 @@ NUM_EPOCHS = 50
 DATA_DIR = "./data/oxford_pets"
 CHECKPOINT_DIR = "./checkpoints"
 
+VAL_SPLIT = 0.2
+RANDOM_SEED = 42
+
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
