@@ -65,7 +65,7 @@ class ProgressiveDecoder(nn.Module):
     ) -> torch.Tensor:
         """[B, 196, 384] → [B, 384, 14, 14]"""
         h = w = self.num_patches_per_side
-        x = x.transpose(1, 2)
+        x = x.transpose(1, 2).contiguous()
         x = x.reshape(batch_size, -1, h, w)
         return x
 
