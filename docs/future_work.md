@@ -68,6 +68,35 @@ Options to add skip connections:
 
 ## Training Improvements
 
+### Production-Quality Metrics
+
+Replace our custom metrics implementation with **torchmetrics**:
+
+"""python
+from torchmetrics.classification import MulticlassJaccardIndex
+
+# Instead of our SegmentationMetrics
+metric = MulticlassJaccardIndex(num_classes=2, average='macro')
+miou = metric(preds, targets)
+"""
+
+**Benefits:**
+- Battle-tested on many projects
+- Handles edge cases we might miss
+- Supports distributed training
+- More metrics available (confusion matrix, per-class accuracy, etc.)
+- Regular updates and bug fixes
+
+**Trade-off:**
+- Additional dependency (torchmetrics)
+- Less educational (library handles complexity)
+- Slightly more overhead
+
+**When to switch:**
+- Moving from tutorial to production
+- Training on multiple GPUs
+- Need advanced metrics (confusion matrix, per-class stats)
+
 ### Data Augmentation
 
 - MixUp, CutMix for regularization
