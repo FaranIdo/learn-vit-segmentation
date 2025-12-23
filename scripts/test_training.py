@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, ".")
 
 import torch
+from torch.utils.data import Subset
 from vit.segmenter import Segmenter
 from training.losses import SegmentationLoss
 from training.trainer import Trainer
@@ -18,14 +19,28 @@ def main():
     print("Training Quick Test (2 epochs)")
     print("=" * 60)
     
-    print("\nLoading small subset of data...")
+    print("\nLoading small subset of data (100 samples)...")
     train_loader, val_loader = create_dataloaders(
         root=DATA_DIR,
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE
     )
     
-    print("Creating model...")
+    # Create subset for quick testing
+    train_dataset = train_loader.dataset
+    val_dataset = val_loader.dataset
+    
+    train_subset = Subset(train_dataset, range(min(100, len(train_dataset))))
+    val_subset = Subset(val_dataset, range(min(50, len(val_dataset))))
+    
+    from torch.utils.data import DataLoader
+    train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
+    
+    print(f"  Train samples: {len(train_subset)} (subset)")
+    print(f"  Val samples: {len(val_subset)} (subset)")
+    
+    print("\nCreating model...")
     model = Segmenter(
         image_size=IMAGE_SIZE,
         patch_size=PATCH_SIZE,
