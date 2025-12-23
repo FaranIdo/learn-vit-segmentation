@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
+import time
 from pathlib import Path
 
 
@@ -17,7 +18,8 @@ class Trainer:
         device,
         num_classes: int,
         checkpoint_dir: str = "./checkpoints",
-        patience: int = 10
+        patience: int = 10,
+        use_tensorboard: bool = True
     ):
         self.model = model
         self.train_loader = train_loader
@@ -32,8 +34,19 @@ class Trainer:
 
         self.best_miou = 0.0
         self.epochs_without_improvement = 0
+        
+        self.start_time = None
+        self.epoch_times = []
 
         Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+        
+        if use_tensorboard:
+            from training.tensorboard_logger import TensorBoardLogger
+            self.tensorboard = TensorBoardLogger(
+                log_dir=os.path.join(checkpoint_dir, "tensorboard")
+            )
+        else:
+            self.tensorboard = None
 
     def train_epoch(self):
         """Train for one epoch."""
@@ -44,6 +57,8 @@ class Trainer:
 
         total_loss = 0.0
         num_batches = 0
+        
+        start_time = time.time()
 
         pbar = tqdm(self.train_loader, desc="Training")
         for images, masks in pbar:
@@ -67,9 +82,11 @@ class Trainer:
                 'loss': f'{loss.item():.4f}',
                 'miou': f'{metrics.get_miou():.4f}'
             })
+        
+        elapsed_time = time.time() - start_time
 
         avg_loss = total_loss / num_batches
-        return avg_loss, metrics.get_metrics_dict()
+        return avg_loss, metrics.get_metrics_dict(), elapsed_time
 
     def validate_epoch(self):
         """Validate for one epoch."""
@@ -80,6 +97,8 @@ class Trainer:
 
         total_loss = 0.0
         num_batches = 0
+        
+        start_time = time.time()
 
         with torch.no_grad():
             pbar = tqdm(self.val_loader, desc="Validation")
@@ -100,9 +119,11 @@ class Trainer:
                     'loss': f'{loss.item():.4f}',
                     'miou': f'{metrics.get_miou():.4f}'
                 })
+        
+        elapsed_time = time.time() - start_time
 
         avg_loss = total_loss / num_batches
-        return avg_loss, metrics.get_metrics_dict()
+        return avg_loss, metrics.get_metrics_dict(), elapsed_time
 
     def save_checkpoint(self, epoch: int, metrics: dict, is_best: bool = False):
         """Save model checkpoint."""
@@ -137,6 +158,19 @@ class Trainer:
     def should_stop_early(self) -> bool:
         """Check if training should stop early."""
         return self.epochs_without_improvement >= self.patience
+    
+    def _format_time(self, seconds: float) -> str:
+        """Format seconds into human-readable time string."""
+        if seconds < 60:
+            return f"{int(seconds)}s"
+        elif seconds < 3600:
+            minutes = int(seconds // 60)
+            secs = int(seconds % 60)
+            return f"{minutes}m {secs}s"
+        else:
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            return f"{hours}h {minutes}m"
 
     def train(self, num_epochs: int, start_epoch: int = 0):
         """Train for multiple epochs."""
@@ -149,13 +183,18 @@ class Trainer:
         print(f"Val batches: {len(self.val_loader)}")
         print(f"Early stopping patience: {self.patience}")
         print("=" * 60)
+        
+        self.start_time = time.time()
 
         for epoch in range(start_epoch, num_epochs):
             print(f"\nEpoch {epoch + 1}/{num_epochs}")
             print("-" * 60)
 
-            train_loss, train_metrics = self.train_epoch()
-            val_loss, val_metrics = self.validate_epoch()
+            train_loss, train_metrics, train_time = self.train_epoch()
+            val_loss, val_metrics, val_time = self.validate_epoch()
+            
+            epoch_time = train_time + val_time
+            self.epoch_times.append(epoch_time)
 
             current_lr = self.optimizer.param_groups[0]['lr']
 
@@ -168,6 +207,48 @@ class Trainer:
             if self.num_classes == 2:
                 print(f"  Train IoU [bg, fg]: [{train_metrics['iou_class_0']:.4f}, {train_metrics['iou_class_1']:.4f}]")
                 print(f"  Val IoU   [bg, fg]: [{val_metrics['iou_class_0']:.4f}, {val_metrics['iou_class_1']:.4f}]")
+            
+            total_elapsed = time.time() - self.start_time
+            avg_epoch_time = sum(self.epoch_times) / len(self.epoch_times)
+            remaining_epochs = num_epochs - (epoch + 1)
+            estimated_remaining = avg_epoch_time * remaining_epochs
+            estimated_completion_time = time.time() + estimated_remaining
+            
+            print(f"\nTiming:")
+            print(f"  Epoch time: {self._format_time(epoch_time)} (Train: {self._format_time(train_time)} | Val: {self._format_time(val_time)})")
+            print(f"  Avg epoch time: {self._format_time(avg_epoch_time)}")
+            
+            if remaining_epochs > 0:
+                print(f"  Estimated remaining: {self._format_time(estimated_remaining)} ({remaining_epochs} epochs × {self._format_time(avg_epoch_time)})")
+                completion_struct = time.localtime(estimated_completion_time)
+                completion_str = time.strftime("%I:%M %p", completion_struct)
+                print(f"  Estimated completion: {completion_str}")
+            
+            print(f"  Total elapsed: {self._format_time(total_elapsed)}")
+            
+            if self.tensorboard:
+                self.tensorboard.log_scalars("Loss", {
+                    "train": train_loss,
+                    "val": val_loss
+                }, epoch + 1)
+                
+                self.tensorboard.log_scalars("mIoU", {
+                    "train": train_metrics['miou'],
+                    "val": val_metrics['miou']
+                }, epoch + 1)
+                
+                self.tensorboard.log_scalars("Pixel_Accuracy", {
+                    "train": train_metrics['pixel_accuracy'],
+                    "val": val_metrics['pixel_accuracy']
+                }, epoch + 1)
+                
+                for c in range(self.num_classes):
+                    self.tensorboard.log_scalars(f"IoU_Class_{c}", {
+                        "train": train_metrics[f'iou_class_{c}'],
+                        "val": val_metrics[f'iou_class_{c}']
+                    }, epoch + 1)
+                
+                self.tensorboard.log_learning_rate(current_lr, epoch + 1)
 
             val_miou = val_metrics['miou']
             is_best = val_miou > self.best_miou
@@ -190,6 +271,11 @@ class Trainer:
         print("\n" + "=" * 60)
         print("Training Complete!")
         print(f"Best Validation mIoU: {self.best_miou:.4f}")
+        final_time = time.time() - self.start_time
+        print(f"Total training time: {self._format_time(final_time)}")
         print("=" * 60)
+        
+        if self.tensorboard:
+            self.tensorboard.close()
 
         return self.best_miou

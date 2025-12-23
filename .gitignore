@@ -219,5 +219,8 @@ checkpoints/
 # Generated outputs
 outputs/
 
+# TensorBoard logs
+**/tensorboard/
+
 # Generated visualizations (old location, if any remain)
 augmentation_sample_*.png

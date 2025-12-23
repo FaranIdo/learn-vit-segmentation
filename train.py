@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, ".")
 
+import argparse
 import torch
 from vit.segmenter import Segmenter
 from training.losses import SegmentationLoss
@@ -36,9 +37,25 @@ def count_parameters(model):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Train ViT Segmentation from scratch")
+    parser.add_argument(
+        "--no-tensorboard",
+        action="store_true",
+        help="Disable TensorBoard logging"
+    )
+    args = parser.parse_args()
+    
+    use_tensorboard = not args.no_tensorboard
+    
     print("=" * 60)
     print("ViT Segmentation - Training from Scratch")
     print("=" * 60)
+    
+    if use_tensorboard:
+        print("\nTensorBoard logging enabled!")
+        print(f"  Run: tensorboard --logdir={CHECKPOINT_DIR}/tensorboard")
+        print(f"  URL: http://localhost:6006")
+        print("=" * 60)
     
     print("\n1. Loading Data...")
     train_loader, val_loader = create_dataloaders(
@@ -90,7 +107,8 @@ def main():
         device=DEVICE,
         num_classes=NUM_CLASSES,
         checkpoint_dir=CHECKPOINT_DIR,
-        patience=10
+        patience=10,
+        use_tensorboard=use_tensorboard
     )
     
     best_miou = trainer.train(num_epochs=NUM_EPOCHS)
