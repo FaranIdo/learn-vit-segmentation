@@ -28,7 +28,7 @@ def evaluate_model(model, test_loader, device, num_classes):
             images = images.to(device)
             masks = masks.to(device)
 
-            logits, _ = model(images)
+            logits = model(images)
             preds = torch.argmax(logits, dim=1)
 
             metrics.update(preds, masks)
