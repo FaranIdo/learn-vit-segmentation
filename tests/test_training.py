@@ -83,7 +83,10 @@ def main():
 
         print(f"\nTesting training loop for {TEST_EPOCHS} epochs...")
         print(f"  Checkpoint dir: {run_dir}")
-        print(f"  TensorBoard: Disabled (test mode)")
+        print(f"  TensorBoard: Enabled")
+        print(f"    Run: tensorboard --logdir={TEST_CHECKPOINT_DIR}")
+        print(f"    URL: http://localhost:6006")
+        
         trainer = Trainer(
             model=model,
             train_loader=train_loader,
@@ -95,7 +98,7 @@ def main():
             num_classes=NUM_CLASSES,
             checkpoint_dir=run_dir,
             patience=10,
-            use_tensorboard=False,
+            use_tensorboard=True,
         )
 
         trainer.train(num_epochs=TEST_EPOCHS)
