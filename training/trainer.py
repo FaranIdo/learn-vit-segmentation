@@ -160,7 +160,7 @@ class Trainer:
             current_lr = self.optimizer.param_groups[0]['lr']
             
             print(f"\nEpoch {epoch + 1} Summary:")
-            print(f"  Learning Rate: {current_lr:.6f}")
+            print(f"  Learning Rate: {current_lr:.2e}")
             print(f"  Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
             print(f"  Train Acc:  {train_metrics['pixel_accuracy']:.4f} | Val Acc:  {val_metrics['pixel_accuracy']:.4f}")
             print(f"  Train mIoU: {train_metrics['miou']:.4f} | Val mIoU: {val_metrics['miou']:.4f}")
