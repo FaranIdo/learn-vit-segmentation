@@ -21,7 +21,7 @@ NUM_LAYERS = 6
 MLP_RATIO = 4.0
 DROPOUT = 0.1
 
-NUM_CLASSES = 3
+NUM_CLASSES = 2  # Oxford Pets: background (0) and pet (1)
 
 BATCH_SIZE = 16
 LEARNING_RATE = 1e-4

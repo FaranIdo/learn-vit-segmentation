@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Dataset files (large, download separately)
+data/oxford_pets/images/
+data/oxford_pets/annotations/
+data/ade20k/ADEChallengeData2016/
+*.tar.gz
+*.zip
+
+# Model checkpoints
+checkpoints/
