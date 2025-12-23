@@ -3,6 +3,8 @@ sys.path.insert(0, ".")
 
 import argparse
 import torch
+import os
+from datetime import datetime
 from vit.segmenter import Segmenter
 from training.losses import SegmentationLoss
 from training.trainer import Trainer
@@ -36,8 +38,45 @@ def count_parameters(model):
     return total, trainable
 
 
+def create_run_directory(base_dir: str, experiment_name: str = None) -> str:
+    """
+    Create a unique run directory with timestamp.
+    
+    Args:
+        base_dir: Base checkpoint directory
+        experiment_name: Optional experiment name (e.g., 'baseline', 'high_lr')
+    
+    Returns:
+        Path to the run directory
+        
+    Examples:
+        create_run_directory('./checkpoints', None)
+        # → './checkpoints/run_2024-12-23_22-45-30'
+        
+        create_run_directory('./checkpoints', 'baseline')
+        # → './checkpoints/baseline_2024-12-23_22-45-30'
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    
+    if experiment_name:
+        run_name = f"{experiment_name}_{timestamp}"
+    else:
+        run_name = f"run_{timestamp}"
+    
+    run_dir = os.path.join(base_dir, run_name)
+    os.makedirs(run_dir, exist_ok=True)
+    
+    return run_dir
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train ViT Segmentation from scratch")
+    parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="Experiment name (e.g., 'baseline', 'high_lr'). Timestamp will be appended automatically."
+    )
     parser.add_argument(
         "--no-tensorboard",
         action="store_true",
@@ -47,13 +86,17 @@ def main():
     
     use_tensorboard = not args.no_tensorboard
     
+    run_dir = create_run_directory(CHECKPOINT_DIR, args.name)
+    
     print("=" * 60)
     print("ViT Segmentation - Training from Scratch")
     print("=" * 60)
+    print(f"Experiment: {os.path.basename(run_dir)}")
+    print(f"Checkpoint dir: {run_dir}")
     
     if use_tensorboard:
         print("\nTensorBoard logging enabled!")
-        print(f"  Run: tensorboard --logdir={CHECKPOINT_DIR}/tensorboard")
+        print(f"  Run: tensorboard --logdir={CHECKPOINT_DIR}")
         print(f"  URL: http://localhost:6006")
         print("=" * 60)
     
@@ -106,7 +149,7 @@ def main():
         scheduler=scheduler,
         device=DEVICE,
         num_classes=NUM_CLASSES,
-        checkpoint_dir=CHECKPOINT_DIR,
+        checkpoint_dir=run_dir,
         patience=10,
         use_tensorboard=use_tensorboard
     )
@@ -115,7 +158,7 @@ def main():
     
     print(f"\n5. Training Complete!")
     print(f"   Best Validation mIoU: {best_miou:.4f}")
-    print(f"   Checkpoints saved to: {CHECKPOINT_DIR}/")
+    print(f"   Checkpoints saved to: {run_dir}/")
     print("=" * 60)
 
 

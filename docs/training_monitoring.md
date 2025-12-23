@@ -87,13 +87,32 @@ TensorBoard is an industry-standard tool for visualizing machine learning experi
 
 **1. Start Training (TensorBoard enabled by default):**
 """bash
+# Training with automatic timestamped directory
 python train.py
+# Saves to: checkpoints/run_2024-12-23_22-45-30/
+
+# Training with experiment name (timestamp always included)
+python train.py --name baseline
+# Saves to: checkpoints/baseline_2024-12-23_22-45-30/
+
+python train.py --name high_lr
+# Saves to: checkpoints/high_lr_2024-12-23_23-10-15/
 """
+
+**Note:** Each training run gets a unique timestamped directory, so you'll **never overwrite previous experiments**. This makes it safe to run multiple training sessions without losing results.
 
 **2. In another terminal, launch TensorBoard:**
 """bash
-tensorboard --logdir=checkpoints/tensorboard
+# View all runs in the checkpoints directory
+tensorboard --logdir=checkpoints
 """
+
+**TensorBoard will automatically discover all runs** in subdirectories:
+- `checkpoints/run_2024-12-23_22-45-30/tensorboard/`
+- `checkpoints/baseline_2024-12-23_23-10-15/tensorboard/`
+- `checkpoints/high_lr_2024-12-23_23-15-30/tensorboard/`
+
+All runs will appear in the TensorBoard interface for easy comparison!
 
 **3. Open browser:**
 """
@@ -232,37 +251,66 @@ Val mIoU:   0.45 → 0.48 → 0.50 (very slow progress)
 
 ### Running Experiments
 
-Each time you train, TensorBoard creates a new run folder with a timestamp.
+Each training run automatically gets a unique timestamped directory. This means **you never overwrite previous experiments**.
 
-**Run 1: Baseline**
+**Example workflow:**
+
 """bash
-python train.py
+# Run 1: Baseline
+python train.py --name baseline
+# → checkpoints/baseline_2024-12-23_22-00-00/
+
+# Run 2: Higher learning rate (edit config.py first)
+python train.py --name high_lr
+# → checkpoints/high_lr_2024-12-23_22-30-00/
+
+# Run 3: More dropout (edit config.py first)
+python train.py --name more_dropout
+# → checkpoints/more_dropout_2024-12-23_23-00-00/
+
+# Run 4: Same experiment name, different day
+python train.py --name baseline
+# → checkpoints/baseline_2024-12-24_10-00-00/
 """
 
-**Run 2: Higher learning rate**
-"""bash
-# Edit config.py: LEARNING_RATE = 2e-4
-python train.py
+**Directory Structure:**
 """
-
-**Run 3: More dropout**
-"""bash
-# Edit config.py: DROPOUT = 0.2
-python train.py
+checkpoints/
+  baseline_2024-12-23_22-00-00/
+    best_model.pth
+    last_checkpoint.pth
+    tensorboard/
+  high_lr_2024-12-23_22-30-00/
+    best_model.pth
+    last_checkpoint.pth
+    tensorboard/
+  more_dropout_2024-12-23_23-00-00/
+    best_model.pth
+    last_checkpoint.pth
+    tensorboard/
 """
 
 ### Viewing Multiple Runs
 
-TensorBoard automatically shows all runs in the same plot:
+TensorBoard automatically discovers and displays all runs:
+
 """bash
-tensorboard --logdir=checkpoints/tensorboard
+# View all experiments
+tensorboard --logdir=checkpoints
 """
 
-**Tips:**
+**In the TensorBoard interface:**
+- Each run appears with its full name (e.g., `baseline_2024-12-23_22-00-00`)
 - Different colors for each run
 - Click run names in legend to toggle on/off
-- Use regex to filter runs
+- Use regex filtering in the search box
 - Compare convergence speed and final performance
+
+**Tips:**
+- Experiment names make it easy to identify what changed
+- Timestamps let you track exact when experiments ran
+- Keep all experiments for future reference
+- Delete old experiments manually if disk space is limited
 
 ---
 
@@ -371,11 +419,14 @@ self.tensorboard.writer.add_hparams(hparams, metrics)
 
 **Commands:**
 """bash
-# Start training
+# Start training (auto-timestamped)
 python train.py
 
+# Start training with experiment name
+python train.py --name baseline
+
 # Launch TensorBoard (in another terminal)
-tensorboard --logdir=checkpoints/tensorboard
+tensorboard --logdir=checkpoints
 
 # Open browser
 http://localhost:6006
