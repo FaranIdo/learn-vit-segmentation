@@ -52,16 +52,25 @@ class TransformerBlock(nn.Module):
         self.norm2 = nn.LayerNorm(embed_dim)
         self.mlp = MLP(embed_dim, mlp_ratio, dropout)
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, return_attention: bool = False):
         # Self-attention with residual
-        x = x + self._attention_block(self.norm1(x))
+        attn_output, attn_weights = self._attention_block(self.norm1(x))
+        x = x + attn_output
         
         # MLP with residual
         x = x + self.mlp(self.norm2(x))
         
+        if return_attention:
+            return x, attn_weights
         return x
     
-    def _attention_block(self, x: torch.Tensor) -> torch.Tensor:
-        attn_output, _ = self.attn(query=x, key=x, value=x)
-        return attn_output
+    def _attention_block(self, x: torch.Tensor):
+        attn_output, attn_weights = self.attn(
+            query=x, 
+            key=x, 
+            value=x,
+            need_weights=True,
+            average_attn_weights=False
+        )
+        return attn_output, attn_weights
 

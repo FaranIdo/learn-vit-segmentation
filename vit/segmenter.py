@@ -45,8 +45,13 @@ class Segmenter(nn.Module):
             num_patches_per_side=num_patches_per_side
         )
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        tokens = self.encoder(x)
-        mask = self.decoder(tokens)
-        return mask
+    def forward(self, x: torch.Tensor, return_attention: bool = False, attention_layer_idx: int = -1):
+        if return_attention:
+            tokens, attention_weights = self.encoder(x, return_attention=True, attention_layer_idx=attention_layer_idx)
+            mask = self.decoder(tokens)
+            return mask, attention_weights
+        else:
+            tokens = self.encoder(x)
+            mask = self.decoder(tokens)
+            return mask
 

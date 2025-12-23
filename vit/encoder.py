@@ -28,15 +28,25 @@ class ViTEncoder(nn.Module):
 
         self.norm = nn.LayerNorm(embed_dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, return_attention: bool = False, attention_layer_idx: int = -1):
         # x: [batch, 3, H, W]
 
         x = self.patch_embed(x)
         # x: [batch, num_patches, embed_dim]
 
-        for block in self.blocks:
-            x = block(x)
+        attention_weights = None
+        
+        if attention_layer_idx < 0:
+            attention_layer_idx = len(self.blocks) + attention_layer_idx
+        
+        for i, block in enumerate(self.blocks):
+            if return_attention and i == attention_layer_idx:
+                x, attention_weights = block(x, return_attention=True)
+            else:
+                x = block(x, return_attention=False)
 
         x = self.norm(x)
 
+        if return_attention:
+            return x, attention_weights
         return x
