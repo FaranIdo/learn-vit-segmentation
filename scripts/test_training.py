@@ -8,6 +8,7 @@ from torch.utils.data import Subset, DataLoader
 from vit.segmenter import Segmenter
 from training.losses import SegmentationLoss
 from training.trainer import Trainer
+from training.logging_utils import setup_logging
 from data.oxford_pets import create_dataloaders
 from config import (
     DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS,
@@ -22,40 +23,17 @@ TEST_VAL_SAMPLES = 50
 TEST_CHECKPOINT_DIR = "./checkpoints/test"
 
 
-def setup_test_logging(checkpoint_dir: str):
-    """Setup logging for test training using stdout redirection."""
+def create_test_run_directory(base_dir: str) -> str:
+    """Create timestamped test run directory."""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    run_dir = os.path.join(checkpoint_dir, f"test_{timestamp}")
+    run_dir = os.path.join(base_dir, f"test_{timestamp}")
     os.makedirs(run_dir, exist_ok=True)
-
-    log_file = os.path.join(run_dir, "training.log")
-
-    class DualOutput:
-        """Write to both file and terminal."""
-        def __init__(self, file_path, terminal):
-            self.file = open(file_path, 'w')
-            self.terminal = terminal
-        
-        def write(self, message):
-            self.terminal.write(message)
-            self.file.write(message)
-            self.file.flush()
-        
-        def flush(self):
-            self.terminal.flush()
-            self.file.flush()
-        
-        def close(self):
-            self.file.close()
-    
-    original_stdout = sys.stdout
-    sys.stdout = DualOutput(log_file, original_stdout)
-
-    return run_dir, log_file, original_stdout
+    return run_dir
 
 
 def main():
-    run_dir, log_file, original_stdout = setup_test_logging(TEST_CHECKPOINT_DIR)
+    run_dir = create_test_run_directory(TEST_CHECKPOINT_DIR)
+    log_file, original_stdout = setup_logging(run_dir)
 
     try:
         print("=" * 60)

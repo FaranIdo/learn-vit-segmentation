@@ -8,6 +8,7 @@ from datetime import datetime
 from vit.segmenter import Segmenter
 from training.losses import SegmentationLoss
 from training.trainer import Trainer
+from training.logging_utils import setup_logging
 from data.oxford_pets import create_dataloaders
 from config import (
     DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS,
@@ -67,42 +68,6 @@ def create_run_directory(base_dir: str, experiment_name: str = None) -> str:
     os.makedirs(run_dir, exist_ok=True)
     
     return run_dir
-
-
-def setup_logging(run_dir: str):
-    """
-    Setup logging to both console and file using stdout redirection.
-    
-    Args:
-        run_dir: Directory to save training.log
-        
-    Returns:
-        Tuple of (log_file_path, original_stdout)
-    """
-    log_file = os.path.join(run_dir, "training.log")
-    
-    class DualOutput:
-        """Write to both file and terminal."""
-        def __init__(self, file_path, terminal):
-            self.file = open(file_path, 'w')
-            self.terminal = terminal
-        
-        def write(self, message):
-            self.terminal.write(message)
-            self.file.write(message)
-            self.file.flush()
-        
-        def flush(self):
-            self.terminal.flush()
-            self.file.flush()
-        
-        def close(self):
-            self.file.close()
-    
-    original_stdout = sys.stdout
-    sys.stdout = DualOutput(log_file, original_stdout)
-    
-    return log_file, original_stdout
 
 
 def main():
