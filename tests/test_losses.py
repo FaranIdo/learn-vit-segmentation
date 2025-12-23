@@ -1,6 +1,6 @@
 import sys
 
-sys.path.insert(0, "/Users/ido.faran/personal/vis-tutorial")
+sys.path.insert(0, ".")
 
 import torch
 from training import DiceLoss, SegmentationLoss

@@ -1,8 +1,12 @@
 import os
+import random
+
+import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import functional as TF
 from PIL import Image
+
 from data.transforms import create_train_transforms, create_val_transforms
 from config import IMAGENET_MEAN, IMAGENET_STD, VAL_SPLIT, RANDOM_SEED
 
@@ -30,7 +34,6 @@ class OxfordPetsDataset(Dataset):
         
         all_samples = [line.strip().split()[0] for line in lines]
         
-        import random
         random.seed(RANDOM_SEED)
         indices = list(range(len(all_samples)))
         random.shuffle(indices)
@@ -75,9 +78,8 @@ class OxfordPetsDataset(Dataset):
 
     def _finalize_mask(self, pil_mask: Image.Image) -> torch.Tensor:
         resized = TF.resize(pil_mask, [self.image_size, self.image_size], interpolation=TF.InterpolationMode.NEAREST)
-        tensor = torch.tensor(list(resized.getdata()), dtype=torch.long)
-        reshaped = tensor.reshape(self.image_size, self.image_size)
-        return self._convert_to_binary(reshaped)
+        tensor = torch.from_numpy(np.array(resized)).long()
+        return self._convert_to_binary(tensor)
 
     def _convert_to_binary(self, mask: torch.Tensor) -> torch.Tensor:
         binary = torch.zeros_like(mask)
@@ -92,8 +94,8 @@ def create_dataloaders(root: str, image_size: int, batch_size: int):
     train_dataset = OxfordPetsDataset(root, "train", image_size, transform=train_transform)
     val_dataset = OxfordPetsDataset(root, "val", image_size, transform=val_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_loader, val_loader
 
@@ -101,5 +103,5 @@ def create_dataloaders(root: str, image_size: int, batch_size: int):
 def create_test_loader(root: str, image_size: int, batch_size: int):
     test_transform = create_val_transforms(image_size)
     test_dataset = OxfordPetsDataset(root, "test", image_size, transform=test_transform)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
     return test_loader

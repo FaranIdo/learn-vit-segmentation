@@ -263,12 +263,12 @@ class Trainer:
 
             self.save_checkpoint(epoch + 1, val_metrics, is_best=is_best)
 
+            self.scheduler.step()
+
             if self.should_stop_early():
                 print(f"\n⚠ Early stopping triggered! No improvement for {self.patience} epochs.")
                 print(f"Best mIoU: {self.best_miou:.4f}")
                 break
-
-            self.scheduler.step()
 
         print("\n" + "=" * 60)
         print("Training Complete!")
