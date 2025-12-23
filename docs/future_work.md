@@ -34,6 +34,32 @@ Separate row and column embeddings instead of flattened 1D:
 - Combine early (fine detail) and late (semantic) features
 - Common in segmentation models like SegFormer
 
+### SETR (Segmentation Transformer)
+
+Use skip connections from intermediate ViT layers:
+
+"""python
+# Modify encoder to return intermediate outputs
+intermediates = []
+for i, block in enumerate(self.blocks):
+    x = block(x)
+    if i in [2, 4]:  # Save layers 2 and 4
+        intermediates.append(x)
+"""
+
+Benefits:
+- Skip connections without changing ViT architecture
+- Earlier layers have more local information
+- Later layers have more semantic information
+- All layers are 14×14, but fused during upsampling
+
+### U-Net Style Decoder for ViT
+
+Options to add skip connections:
+1. **Intermediate layer skips**: Use blocks 2, 4, 6 outputs
+2. **Fake pyramid**: Upsample 14×14 to multiple scales
+3. **Hierarchical ViT**: Use Swin or SegFormer (true multi-scale)
+
 ### Relative Position Bias
 
 - Add learnable bias based on relative position in attention
