@@ -280,15 +280,7 @@ tensorboard --logdir=checkpoints
 # Wait a few seconds and refresh browser
 """
 
-## Next Steps
-
-### Continue Learning
-1. Review documentation in `docs/` for deep dives
-2. Experiment with different hyperparameters
-3. Compare learning curves in TensorBoard
-4. Visualize attention maps from trained model
-
-### Future Improvements
+## Future Improvements
 - Pretrained model fine-tuning (SegFormer)
 - RoPE (Rotary Position Embeddings)
 - Swin Transformer architecture

@@ -85,10 +85,10 @@ Update `train()` method:
 - **Estimated remaining time** = `avg_epoch_time * (num_epochs - current_epoch)`
 - Print detailed time estimates:
   ```javascript
-      Epoch 5/50
-      Epoch time: 2m 34s (Train: 1m 45s, Val: 49s)
-      Estimated remaining: 1h 55m (based on avg 2m 36s/epoch)
-      Total elapsed: 12m 50s
+        Epoch 5/50
+        Epoch time: 2m 34s (Train: 1m 45s, Val: 49s)
+        Estimated remaining: 1h 55m (based on avg 2m 36s/epoch)
+        Total elapsed: 12m 50s
   ```
 
 
@@ -256,6 +256,7 @@ tensorboard --logdir=checkpoints/tensorboard
 
 # Disable TensorBoard if needed
 python train.py --no-tensorboard
+
 
 
 ```
