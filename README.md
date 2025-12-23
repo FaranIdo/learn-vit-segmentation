@@ -29,7 +29,7 @@ pip install -r requirements.txt
 Run the automated setup script:
 
 """bash
-bash scripts/setup_dataset.sh
+bash data/setup_dataset.sh
 """
 
 The script will:
@@ -38,7 +38,7 @@ The script will:
 - Extract all files
 - Verify the dataset integrity
 
-**Manual Setup:** If you prefer manual download, see `scripts/setup_dataset.sh` for URLs and structure.
+**Manual Setup:** If you prefer manual download, see `data/setup_dataset.sh` for URLs and structure.
 
 ### 3. Verify Setup
 
