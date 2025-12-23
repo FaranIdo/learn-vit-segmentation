@@ -14,7 +14,7 @@ from config import DATA_DIR, IMAGE_SIZE
 from torchvision.transforms import functional as TF
 
 # Create output directory
-OUTPUT_DIR = "visualizations/augmentations"
+OUTPUT_DIR = "outputs/augmentations"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 

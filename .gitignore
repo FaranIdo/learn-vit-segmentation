@@ -216,5 +216,8 @@ data/ade20k/ADEChallengeData2016/
 # Model checkpoints
 checkpoints/
 
-# Generated visualizations (keep in visualizations/ folder)
+# Generated outputs
+outputs/
+
+# Generated visualizations (old location, if any remain)
 augmentation_sample_*.png
