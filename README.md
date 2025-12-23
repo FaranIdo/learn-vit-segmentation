@@ -26,23 +26,19 @@ pip install -r requirements.txt
 
 ### 2. Download Dataset
 
-Download the Oxford-IIIT Pets dataset manually (SSL certificate issues with automatic download):
+Run the automated setup script:
 
 """bash
-# Create data directory
-mkdir -p data/oxford_pets
-
-# Download images
-curl -k -L -O https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
-tar -xzf images.tar.gz -C data/oxford_pets/
-
-# Download annotations
-curl -k -L -O https://www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz
-tar -xzf annotations.tar.gz -C data/oxford_pets/
-
-# Cleanup
-rm images.tar.gz annotations.tar.gz
+bash scripts/setup_dataset.sh
 """
+
+The script will:
+- Create the data directory structure
+- Download images (~755 MB) and annotations (~20 MB)
+- Extract all files
+- Verify the dataset integrity
+
+**Manual Setup:** If you prefer manual download, see `scripts/setup_dataset.sh` for URLs and structure.
 
 ### 3. Verify Setup
 
