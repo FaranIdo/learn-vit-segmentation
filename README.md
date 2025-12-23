@@ -83,11 +83,17 @@ python train.py --name high_lr
 ### Training Options
 
 """bash
+# Custom number of epochs (overrides config.py)
+python train.py --epochs 100
+
+# Named experiment with custom epochs
+python train.py --name baseline --epochs 30
+
 # Disable TensorBoard logging
 python train.py --no-tensorboard
 
-# Named experiment without TensorBoard
-python train.py --name my_experiment --no-tensorboard
+# Combine all options
+python train.py --name my_experiment --epochs 20 --no-tensorboard
 """
 
 ### TensorBoard Monitoring

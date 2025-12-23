@@ -142,7 +142,9 @@ class Trainer:
         if is_best:
             best_path = os.path.join(self.checkpoint_dir, 'best_model.pth')
             torch.save(checkpoint, best_path)
+            abs_best_path = os.path.abspath(best_path)
             print(f"✓ Saved best model (mIoU: {self.best_miou:.4f})")
+            print(f"  Location: {abs_best_path}")
 
     def load_checkpoint(self, checkpoint_path: str):
         """Load model checkpoint."""
