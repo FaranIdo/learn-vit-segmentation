@@ -11,7 +11,7 @@ from tqdm import tqdm
 from vit.segmenter import Segmenter
 from data.oxford_pets import create_test_loader
 from training.metrics import SegmentationMetrics
-from evaluation.analysis import calculate_sample_iou, select_samples_by_iou, plot_error_grid, plot_error_map_comparison, analyze_by_size
+from evaluation.analysis import calculate_sample_iou, select_samples_by_iou, plot_error_grid, plot_error_map_comparison, analyze_by_size, analyze_boundary_vs_interior, plot_boundary_analysis
 from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
 
 
@@ -163,6 +163,40 @@ def run_phase1_analysis(all_images, all_masks, all_predictions, all_ious, all_ma
     return size_stats
 
 
+def run_phase2_analysis(all_images, all_masks, all_predictions, all_ious, selected, output_dir):
+    print("\n" + "=" * 70)
+    print("PHASE 2: BOUNDARY VS INTERIOR ERROR ANALYSIS")
+    print("=" * 70)
+
+    os.makedirs(os.path.join(output_dir, "boundary_analysis"), exist_ok=True)
+
+    print("\n1. Computing boundary vs interior accuracy...")
+    boundary_stats = analyze_boundary_vs_interior(all_masks, all_predictions)
+
+    print("\n   Boundary vs Interior Results:")
+    print("   " + "-" * 60)
+    print(f"   Boundary Accuracy: {boundary_stats['boundary_accuracy']:.4f}")
+    print(f"   Interior Accuracy: {boundary_stats['interior_accuracy']:.4f}")
+    print(f"   Accuracy Gap: {boundary_stats['interior_accuracy'] - boundary_stats['boundary_accuracy']:.4f}")
+    print(f"   Boundary Pixels: {boundary_stats['boundary_pixels']:,}")
+    print(f"   Interior Pixels: {boundary_stats['interior_pixels']:,}")
+    print("   " + "-" * 60)
+
+    print("\n2. Creating boundary analysis visualizations...")
+    all_selected = selected["worst"][:3] + selected["median"][:3] + selected["best"][:3]
+
+    for idx, sample_idx in enumerate(all_selected):
+        iou = all_ious[sample_idx]
+        fig, boundary_acc, interior_acc = plot_boundary_analysis(all_images[sample_idx], all_masks[sample_idx], all_predictions[sample_idx], sample_idx, iou)
+        output_path = os.path.join(output_dir, "boundary_analysis", f"sample_{sample_idx:04d}_iou_{iou:.3f}_b_{boundary_acc:.2f}_i_{interior_acc:.2f}.png")
+        plt.savefig(output_path, dpi=100, bbox_inches="tight")
+        plt.close(fig)
+
+    print(f"   Saved {len(all_selected)} boundary analysis visualizations")
+
+    return boundary_stats
+
+
 def main():
     parser = argparse.ArgumentParser(description="Enhanced Evaluation with Deep Analysis")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint")
@@ -217,6 +251,14 @@ def main():
             all_images, all_masks, all_predictions, all_ious, all_mask_areas = collect_all_predictions(model, test_loader, DEVICE)
 
             run_phase1_analysis(all_images, all_masks, all_predictions, all_ious, all_mask_areas, output_dir)
+
+        if args.phase in ["2", "all"]:
+            if args.phase == "2":
+                print("\nCollecting all predictions for detailed analysis...")
+                all_images, all_masks, all_predictions, all_ious, all_mask_areas = collect_all_predictions(model, test_loader, DEVICE)
+
+            selected = select_samples_by_iou(all_ious, num_best=5, num_median=5, num_worst=5)
+            run_phase2_analysis(all_images, all_masks, all_predictions, all_ious, selected, output_dir)
 
         print("\n" + "=" * 70)
         print("✓ Enhanced evaluation complete!")

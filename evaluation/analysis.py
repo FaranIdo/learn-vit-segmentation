@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import binary_dilation, binary_erosion
 from visualization.predictions import denormalize_image, mask_to_rgb, overlay_mask_on_image
 
 
@@ -130,3 +131,100 @@ def analyze_by_size(all_ious: list[float], mask_areas: list[float], total_pixels
         "medium": {"count": len(medium_ious), "mean_iou": np.mean(medium_ious) if medium_ious else 0.0},
         "large": {"count": len(large_ious), "mean_iou": np.mean(large_ious) if large_ious else 0.0},
     }
+
+
+def extract_boundary_pixels(mask: np.ndarray, thickness: int = 3) -> tuple[np.ndarray, np.ndarray]:
+    mask_binary = mask > 0
+
+    if not mask_binary.any():
+        return np.zeros_like(mask_binary), mask_binary
+
+    dilated = binary_dilation(mask_binary, iterations=thickness)
+    eroded = binary_erosion(mask_binary, iterations=thickness)
+
+    boundary = dilated & ~eroded
+    interior = eroded
+
+    return boundary, interior
+
+
+def analyze_boundary_vs_interior(all_masks: list, all_predictions: list) -> dict:
+    boundary_correct = 0
+    boundary_total = 0
+    interior_correct = 0
+    interior_total = 0
+
+    for mask, pred in zip(all_masks, all_predictions):
+        mask_np = mask.cpu().numpy()
+        pred_np = pred.cpu().numpy()
+
+        boundary, interior = extract_boundary_pixels(mask_np)
+
+        boundary_pixels = boundary.sum()
+        interior_pixels = interior.sum()
+
+        if boundary_pixels > 0:
+            boundary_correct += ((pred_np == mask_np) & boundary).sum()
+            boundary_total += boundary_pixels
+
+        if interior_pixels > 0:
+            interior_correct += ((pred_np == mask_np) & interior).sum()
+            interior_total += interior_pixels
+
+    return {
+        "boundary_accuracy": boundary_correct / boundary_total if boundary_total > 0 else 0.0,
+        "interior_accuracy": interior_correct / interior_total if interior_total > 0 else 0.0,
+        "boundary_pixels": boundary_total,
+        "interior_pixels": interior_total,
+    }
+
+
+def plot_boundary_analysis(image: torch.Tensor, mask: torch.Tensor, prediction: torch.Tensor, sample_idx: int, iou: float) -> plt.Figure:
+    fig, axes = plt.subplots(1, 5, figsize=(20, 4))
+
+    img = denormalize_image(image)
+    mask_np = mask.cpu().numpy()
+    pred_np = prediction.cpu().numpy()
+
+    boundary, interior = extract_boundary_pixels(mask_np)
+
+    boundary_correct = (pred_np == mask_np) & boundary
+    boundary_error = (pred_np != mask_np) & boundary
+    interior_correct = (pred_np == mask_np) & interior
+    interior_error = (pred_np != mask_np) & interior
+
+    boundary_map = np.zeros((*mask_np.shape, 3), dtype=np.uint8)
+    boundary_map[boundary_correct] = [0, 255, 0]
+    boundary_map[boundary_error] = [255, 0, 0]
+
+    interior_map = np.zeros((*mask_np.shape, 3), dtype=np.uint8)
+    interior_map[interior_correct] = [0, 255, 0]
+    interior_map[interior_error] = [255, 0, 0]
+
+    boundary_acc = boundary_correct.sum() / boundary.sum() if boundary.sum() > 0 else 0
+    interior_acc = interior_correct.sum() / interior.sum() if interior.sum() > 0 else 0
+
+    axes[0].imshow(img)
+    axes[0].set_title("Original Image")
+    axes[0].axis("off")
+
+    axes[1].imshow(mask_to_rgb(mask, 2))
+    axes[1].set_title("Ground Truth")
+    axes[1].axis("off")
+
+    axes[2].imshow(mask_to_rgb(prediction, 2))
+    axes[2].set_title("Prediction")
+    axes[2].axis("off")
+
+    axes[3].imshow(boundary_map)
+    axes[3].set_title(f"Boundary Errors\n(Acc: {boundary_acc:.2%})")
+    axes[3].axis("off")
+
+    axes[4].imshow(interior_map)
+    axes[4].set_title(f"Interior Errors\n(Acc: {interior_acc:.2%})")
+    axes[4].axis("off")
+
+    fig.suptitle(f"Sample {sample_idx} - IoU: {iou:.3f} | Boundary: {boundary_acc:.2%} | Interior: {interior_acc:.2%}", fontsize=14, y=0.98)
+    plt.tight_layout()
+
+    return fig, boundary_acc, interior_acc
