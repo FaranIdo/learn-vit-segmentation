@@ -15,22 +15,22 @@ A clean, educational implementation of Vision Transformer for semantic segmentat
 
 ### 1. Setup Environment
 
-"""bash
+```bash
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-"""
+```
 
 ### 2. Download Dataset
 
 Run the automated setup script:
 
-"""bash
+```bash
 bash data/setup_dataset.sh
-"""
+```
 
 The script will:
 - Create the data directory structure
@@ -42,9 +42,9 @@ The script will:
 
 ### 3. Verify Setup
 
-"""bash
+```bash
 python examples/sanity_check.py
-"""
+```
 
 This will verify:
 - PyTorch installation
@@ -68,15 +68,15 @@ The split is deterministic (seed=42) so you'll get the same train/val split ever
 
 ### Basic Training
 
-"""bash
+```bash
 # Train with default settings (auto-timestamped)
 python train.py
 # Saves to: checkpoints/run_2024-12-23_22-45-30/
-"""
+```
 
 ### Named Experiments
 
-"""bash
+```bash
 # Train with experiment name (timestamp always included)
 python train.py --name baseline
 # Saves to: checkpoints/baseline_2024-12-23_22-45-30/
@@ -84,13 +84,13 @@ python train.py --name baseline
 # Train with different hyperparameters
 python train.py --name high_lr
 # Saves to: checkpoints/high_lr_2024-12-23_23-10-15/
-"""
+```
 
 **Note:** Each run gets a unique timestamped directory, so **you'll never overwrite previous experiments**.
 
 ### Training Options
 
-"""bash
+```bash
 # Custom number of epochs (overrides config.py)
 python train.py --epochs 100
 
@@ -102,18 +102,18 @@ python train.py --no-tensorboard
 
 # Combine all options
 python train.py --name my_experiment --epochs 20 --no-tensorboard
-"""
+```
 
 ### TensorBoard Monitoring
 
 In a separate terminal, launch TensorBoard:
 
-"""bash
+```bash
 # View all experiments
 tensorboard --logdir=checkpoints
 
 # Open browser to http://localhost:6006
-"""
+```
 
 TensorBoard will automatically discover all runs:
 - `checkpoints/run_2024-12-23_22-45-30/tensorboard/`
@@ -122,7 +122,7 @@ TensorBoard will automatically discover all runs:
 
 ### What You'll See During Training
 
-"""
+```
 Epoch 5/50
 ──────────────────────────────────────────────────────────
 Training: 100%|████████| 200/200 [01:45<00:00, 1.90it/s, loss=0.3245, miou=0.7234]
@@ -143,7 +143,7 @@ Timing:
   Estimated completion: 2:05 PM
   Total elapsed: 12m 50s
 ✓ Saved best model (mIoU: 0.7456)
-"""
+```
 
 ## Evaluation
 
@@ -151,9 +151,9 @@ Timing:
 
 After completing training, evaluate your model on the test set:
 
-"""bash
+```bash
 python evaluate.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
-"""
+```
 
 **Important:**
 - The test set should only be used ONCE for final evaluation
@@ -162,7 +162,7 @@ python evaluate.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_mo
 - Do NOT tune hyperparameters based on test performance
 
 **Output:**
-"""
+```
 ======================================================================
 FINAL TEST SET RESULTS
 ======================================================================
@@ -173,13 +173,13 @@ Per-Class IoU:
   Class 0 (background): 0.8734
   Class 1 (pet): 0.6644
 ======================================================================
-"""
+```
 
 ### Enhanced Evaluation (Deep Analysis)
 
 For comprehensive model analysis beyond basic metrics:
 
-"""bash
+```bash
 # Run all analysis phases
 python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase all
 
@@ -187,7 +187,7 @@ python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-3
 python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 1  # Error visualization
 python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 2  # Boundary analysis
 python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 3  # Confidence analysis
-"""
+```
 
 **Analysis Phases:**
 
@@ -212,7 +212,7 @@ python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-3
 **Results Location:**
 
 All evaluation outputs are saved to:
-"""
+```
 checkpoints/baseline_2024-12-23_22-45-30/evaluation/
 ├── evaluation_results.txt          # Full text output (metrics + analysis)
 ├── error_grid_best.png            # 5 best predictions
@@ -224,7 +224,7 @@ checkpoints/baseline_2024-12-23_22-45-30/evaluation/
 │   └── sample_*_boundary.png
 └── confidence_analysis/           # Confidence heatmaps
     └── sample_*_conf_*.png
-"""
+```
 
 **Key Insights You'll Get:**
 
@@ -235,7 +235,7 @@ checkpoints/baseline_2024-12-23_22-45-30/evaluation/
 5. **Error Patterns:** Visual identification of common failure modes
 
 **Example Findings:**
-"""
+```
 Size-Based Analysis:
   Small objects (< 5000px): 54.9% IoU
   Large objects (> 15000px): 81.5% IoU
@@ -250,7 +250,7 @@ Confidence Analysis:
   Correct predictions: 97.3% confidence
   Incorrect predictions: 83.2% confidence
   Gap: 14.1%
-"""
+```
 
 **Documentation:**
 
@@ -260,7 +260,7 @@ After running enhanced evaluation, you can generate a comprehensive analysis rep
 
 Edit `config.py` to change hyperparameters:
 
-"""python
+```python
 # Model architecture
 IMAGE_SIZE = 224
 PATCH_SIZE = 16
@@ -277,29 +277,29 @@ NUM_EPOCHS = 50
 
 # Dataset
 NUM_CLASSES = 2  # Oxford Pets: background + pet
-"""
+```
 
 ## Visualization
 
 ### Visualize Data Augmentations
 
-"""bash
+```bash
 python tools/visualize_augmentations.py
 # Outputs to: outputs/augmentations/
-"""
+```
 
 Shows original image and augmented versions with labeled techniques.
 
 ### Visualize Predictions
 
-"""bash
+```bash
 # Visualize predictions from untrained model
 python tools/visualize_predictions.py
 # Outputs to: outputs/predictions/
 
 # Visualize predictions from trained model
 python tools/visualize_predictions.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
-"""
+```
 
 Shows:
 - Original image
@@ -309,14 +309,14 @@ Shows:
 
 ### Visualize Attention Maps
 
-"""bash
+```bash
 # Visualize attention from untrained model
 python tools/visualize_attention.py
 # Outputs to: outputs/attention/
 
 # Visualize attention from trained model (specific layer)
 python tools/visualize_attention.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --layer 3
-"""
+```
 
 Shows:
 - Attention maps at different layers
@@ -381,16 +381,16 @@ On Apple M-series (MPS):
 
 ### MPS Not Available
 If training falls back to CPU:
-"""bash
+```bash
 # Check MPS availability
 python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
-"""
+```
 
 ### Out of Memory
 Reduce batch size in `config.py`:
-"""python
+```python
 BATCH_SIZE = 8  # or 4
-"""
+```
 
 ### Training Too Slow
 - Reduce `IMAGE_SIZE` to 128 or 160
@@ -398,7 +398,7 @@ BATCH_SIZE = 8  # or 4
 - Reduce `NUM_LAYERS` to 4
 
 ### TensorBoard Not Showing Data
-"""bash
+```bash
 # Ensure training is running with TensorBoard enabled (default)
 python train.py
 
@@ -406,7 +406,7 @@ python train.py
 tensorboard --logdir=checkpoints
 
 # Wait a few seconds and refresh browser
-"""
+```
 
 ## Future Improvements
 - Pretrained model fine-tuning (SegFormer)
