@@ -12,7 +12,7 @@ from vit.segmenter import Segmenter
 from data.oxford_pets import create_test_loader
 from training.metrics import SegmentationMetrics
 from evaluation.analysis import calculate_sample_iou, select_samples_by_iou, plot_error_grid, plot_error_map_comparison, analyze_by_size, analyze_boundary_vs_interior, plot_boundary_analysis, analyze_confidence_by_correctness, analyze_uncertainty_zones, plot_confidence_analysis
-from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
+from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR, parse_device
 
 
 class TeeOutput:
@@ -267,7 +267,16 @@ def main():
     parser = argparse.ArgumentParser(description="Enhanced Evaluation with Deep Analysis")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint")
     parser.add_argument("--phase", type=str, default="1", choices=["1", "2", "3", "all"], help="Which phase to run (1, 2, 3, or all)")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cpu", "cuda", "mps"],
+        help="Device to use for evaluation (default: auto-detect)"
+    )
     args = parser.parse_args()
+    
+    device = parse_device(args.device)
 
     output_dir = get_output_dir(args.checkpoint)
     os.makedirs(output_dir, exist_ok=True)
@@ -281,7 +290,7 @@ def main():
         print("ViT Segmentation - Enhanced Test Set Evaluation")
         print("=" * 70)
         print(f"Checkpoint: {args.checkpoint}")
-        print(f"Device: {DEVICE}")
+        print(f"Device: {device}")
         print(f"Phase: {args.phase}")
 
         print("\nLoading test data...")
@@ -290,10 +299,10 @@ def main():
 
         print("\nCreating model...")
         model = Segmenter(image_size=IMAGE_SIZE, patch_size=PATCH_SIZE, num_classes=NUM_CLASSES, embed_dim=EMBED_DIM, num_layers=NUM_LAYERS, num_heads=NUM_HEADS, mlp_ratio=MLP_RATIO, dropout=DROPOUT)
-        model = model.to(DEVICE)
+        model = model.to(device)
 
         print("\nLoading checkpoint...")
-        epoch, train_metrics = load_checkpoint(args.checkpoint, model, DEVICE)
+        epoch, train_metrics = load_checkpoint(args.checkpoint, model, device)
         print(f"Loaded model from epoch: {epoch}")
 
         print(f"\nOutput directory: {output_dir}")
@@ -301,7 +310,7 @@ def main():
         print("\n" + "=" * 70)
         print("OVERALL METRICS")
         print("=" * 70)
-        test_metrics = evaluate_with_metrics(model, test_loader, DEVICE, NUM_CLASSES)
+        test_metrics = evaluate_with_metrics(model, test_loader, device, NUM_CLASSES)
 
         print(f"\nPixel Accuracy: {test_metrics['pixel_accuracy']:.4f}")
         print(f"Mean IoU (mIoU): {test_metrics['miou']:.4f}")
@@ -314,7 +323,7 @@ def main():
 
         if args.phase in ["1", "2", "3", "all"]:
             print("\nCollecting all predictions for detailed analysis...")
-            all_images, all_masks, all_predictions, all_ious, all_mask_areas, all_logits = collect_all_predictions(model, test_loader, DEVICE)
+            all_images, all_masks, all_predictions, all_ious, all_mask_areas, all_logits = collect_all_predictions(model, test_loader, device)
 
         if args.phase in ["1", "all"]:
             run_phase1_analysis(all_images, all_masks, all_predictions, all_ious, all_mask_areas, output_dir)

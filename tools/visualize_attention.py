@@ -16,13 +16,13 @@ from visualization.attention import (
 )
 from config import (
     DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS,
-    MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
+    MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR, parse_device
 )
 
 OUTPUT_DIR = "outputs/attention"
 
 
-def load_model_checkpoint(checkpoint_path: str) -> Segmenter:
+def load_model_checkpoint(checkpoint_path: str, device) -> Segmenter:
     """Load trained model from checkpoint."""
     model = Segmenter(
         image_size=IMAGE_SIZE,
@@ -35,15 +35,15 @@ def load_model_checkpoint(checkpoint_path: str) -> Segmenter:
         dropout=DROPOUT
     )
     
-    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
-    model = model.to(DEVICE)
+    model = model.to(device)
     model.eval()
     
     return model
 
 
-def visualize_untrained_attention():
+def visualize_untrained_attention(device):
     """Visualize attention from an untrained model."""
     print("=" * 60)
     print("Visualizing Attention: UNTRAINED Model")
@@ -60,14 +60,14 @@ def visualize_untrained_attention():
         mlp_ratio=MLP_RATIO,
         dropout=DROPOUT
     )
-    model = model.to(DEVICE)
+    model = model.to(device)
     model.eval()
     
     print("Loading validation data...")
     _, val_loader = create_dataloaders(DATA_DIR, IMAGE_SIZE, BATCH_SIZE)
     
     images, masks = next(iter(val_loader))
-    images = images.to(DEVICE)
+    images = images.to(device)
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
@@ -115,20 +115,20 @@ def visualize_untrained_attention():
     print("=" * 60)
 
 
-def visualize_trained_attention(checkpoint_path: str):
+def visualize_trained_attention(checkpoint_path: str, device):
     """Visualize attention from a trained model."""
     print("=" * 60)
     print("Visualizing Attention: TRAINED Model")
     print("=" * 60)
     
     print(f"\nLoading model from: {checkpoint_path}")
-    model = load_model_checkpoint(checkpoint_path)
+    model = load_model_checkpoint(checkpoint_path, device)
     
     print("Loading validation data...")
     _, val_loader = create_dataloaders(DATA_DIR, IMAGE_SIZE, BATCH_SIZE)
     
     images, masks = next(iter(val_loader))
-    images = images.to(DEVICE)
+    images = images.to(device)
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
@@ -182,12 +182,21 @@ def main():
         default=None,
         help="Path to model checkpoint (if not provided, uses untrained model)"
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cpu", "cuda", "mps"],
+        help="Device to use for visualization (default: auto-detect)"
+    )
     args = parser.parse_args()
     
+    device = parse_device(args.device)
+    
     if args.checkpoint:
-        visualize_trained_attention(args.checkpoint)
+        visualize_trained_attention(args.checkpoint, device)
     else:
-        visualize_untrained_attention()
+        visualize_untrained_attention(device)
 
 
 if __name__ == "__main__":

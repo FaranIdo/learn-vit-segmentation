@@ -135,11 +135,16 @@ python train.py --epochs 100
 # Named experiment with custom epochs
 python train.py --name baseline --epochs 30
 
+# Force specific device (cpu, cuda, mps)
+python train.py --device cpu
+python train.py --device cuda
+python train.py --device mps
+
 # Disable TensorBoard logging
 python train.py --no-tensorboard
 
 # Combine all options
-python train.py --name my_experiment --epochs 20 --no-tensorboard
+python train.py --name my_experiment --epochs 20 --device cuda --no-tensorboard
 ```
 
 ### TensorBoard Monitoring
@@ -454,11 +459,45 @@ After training, you can expect:
 
 ## Troubleshooting
 
-### MPS Not Available
-If training falls back to CPU:
+### Device-Related Issues
+
+#### "Torch not compiled with CUDA enabled"
+This error means PyTorch was installed without CUDA support. This happens when:
+- You installed the CPU-only version of PyTorch
+- You're on a system without NVIDIA GPU
+
+**Solution:**
 ```bash
-# Check MPS availability
+# Force CPU execution
+python train.py --device cpu
+
+# Or reinstall PyTorch with CUDA support (if you have NVIDIA GPU)
+# Visit: https://pytorch.org/get-started/locally/
+```
+
+#### "MPS Not Available"
+If training falls back to CPU or you see MPS-related errors:
+```bash
+# Check MPS availability (requires Apple Silicon Mac)
 python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
+
+# Force CPU if MPS has issues
+python train.py --device cpu
+```
+
+**Note:** MPS requires:
+- Apple Silicon Mac (M1, M2, M3, etc.)
+- macOS 12.3 or later
+- PyTorch 1.12 or later
+
+#### "CUDA error" or GPU out of memory
+If you encounter CUDA errors:
+```bash
+# Force CPU execution
+python train.py --device cpu
+
+# Or reduce batch size in config.py
+BATCH_SIZE = 8  # or 4
 ```
 
 ### Out of Memory

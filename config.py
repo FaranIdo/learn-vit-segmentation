@@ -9,6 +9,14 @@ def get_device():
     return torch.device("cpu")
 
 
+def parse_device(device_arg: str = None):
+    if device_arg is None:
+        return get_device()
+    if device_arg not in ("cpu", "cuda", "mps"):
+        raise ValueError(f"Invalid device: {device_arg}. Choose from: cpu, cuda, mps")
+    return torch.device(device_arg)
+
+
 DEVICE = get_device()
 
 IMAGE_SIZE = 224

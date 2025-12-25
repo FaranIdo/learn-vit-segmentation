@@ -13,7 +13,7 @@ from data.oxford_pets import create_dataloaders
 from config import (
     DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS,
     MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, LEARNING_RATE,
-    WEIGHT_DECAY, NUM_EPOCHS, DATA_DIR, CHECKPOINT_DIR
+    WEIGHT_DECAY, NUM_EPOCHS, DATA_DIR, CHECKPOINT_DIR, parse_device
 )
 
 
@@ -89,10 +89,18 @@ def main():
         action="store_true",
         help="Disable TensorBoard logging"
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cpu", "cuda", "mps"],
+        help="Device to use for training (default: auto-detect)"
+    )
     args = parser.parse_args()
     
     use_tensorboard = not args.no_tensorboard
     num_epochs = args.epochs if args.epochs is not None else NUM_EPOCHS
+    device = parse_device(args.device)
     
     run_dir = create_run_directory(CHECKPOINT_DIR, args.name)
     log_file, original_stdout = setup_logging(run_dir)
@@ -124,12 +132,12 @@ def main():
         
         print("\n2. Creating Model...")
         model = create_model()
-        model = model.to(DEVICE)
+        model = model.to(device)
         
         total_params, trainable_params = count_parameters(model)
         print(f"   Total parameters: {total_params:,}")
         print(f"   Trainable parameters: {trainable_params:,}")
-        print(f"   Device: {DEVICE}")
+        print(f"   Device: {device}")
         
         print("\n3. Setting up Training...")
         criterion = SegmentationLoss(dice_weight=1.0, ce_weight=1.0)
@@ -159,7 +167,7 @@ def main():
             criterion=criterion,
             optimizer=optimizer,
             scheduler=scheduler,
-            device=DEVICE,
+            device=device,
             num_classes=NUM_CLASSES,
             checkpoint_dir=run_dir,
             patience=10,

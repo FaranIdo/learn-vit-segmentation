@@ -9,7 +9,7 @@ from tqdm import tqdm
 from vit.segmenter import Segmenter
 from data.oxford_pets import create_test_loader
 from training.metrics import SegmentationMetrics
-from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
+from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR, parse_device
 
 
 def load_checkpoint(checkpoint_path: str, model, device):
@@ -41,13 +41,16 @@ def evaluate_model(model, test_loader, device, num_classes):
 def main():
     parser = argparse.ArgumentParser(description="Evaluate ViT Segmentation on official test set")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint (e.g., checkpoints/run_*/best_model.pth)")
+    parser.add_argument("--device", type=str, default=None, choices=["cpu", "cuda", "mps"], help="Device to use for evaluation (default: auto-detect)")
     args = parser.parse_args()
+
+    device = parse_device(args.device)
 
     print("=" * 70)
     print("ViT Segmentation - Final Test Set Evaluation")
     print("=" * 70)
     print(f"Checkpoint: {args.checkpoint}")
-    print(f"Device: {DEVICE}")
+    print(f"Device: {device}")
     print()
 
     print("1. Loading test data...")
@@ -57,10 +60,10 @@ def main():
 
     print("\n2. Creating model...")
     model = Segmenter(image_size=IMAGE_SIZE, patch_size=PATCH_SIZE, num_classes=NUM_CLASSES, embed_dim=EMBED_DIM, num_layers=NUM_LAYERS, num_heads=NUM_HEADS, mlp_ratio=MLP_RATIO, dropout=DROPOUT)
-    model = model.to(DEVICE)
+    model = model.to(device)
 
     print("\n3. Loading checkpoint...")
-    epoch, train_metrics = load_checkpoint(args.checkpoint, model, DEVICE)
+    epoch, train_metrics = load_checkpoint(args.checkpoint, model, device)
     print(f"   Loaded model from epoch: {epoch}")
     if train_metrics:
         val_miou = train_metrics.get("miou", "N/A")
@@ -68,7 +71,7 @@ def main():
 
     print("\n4. Evaluating on test set...")
     print("-" * 70)
-    test_metrics = evaluate_model(model, test_loader, DEVICE, NUM_CLASSES)
+    test_metrics = evaluate_model(model, test_loader, device, NUM_CLASSES)
 
     print("\n" + "=" * 70)
     print("FINAL TEST SET RESULTS")

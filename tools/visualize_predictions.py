@@ -12,13 +12,13 @@ from visualization.predictions import (
 )
 from config import (
     DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS,
-    MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
+    MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR, parse_device
 )
 
 OUTPUT_DIR = "outputs/predictions"
 
 
-def load_model_checkpoint(checkpoint_path: str) -> Segmenter:
+def load_model_checkpoint(checkpoint_path: str, device) -> Segmenter:
     """Load trained model from checkpoint."""
     model = Segmenter(
         image_size=IMAGE_SIZE,
@@ -31,15 +31,15 @@ def load_model_checkpoint(checkpoint_path: str) -> Segmenter:
         dropout=DROPOUT
     )
     
-    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
-    model = model.to(DEVICE)
+    model = model.to(device)
     model.eval()
     
     return model
 
 
-def visualize_untrained_model():
+def visualize_untrained_model(device):
     """Visualize predictions from an untrained model (random weights)."""
     print("=" * 60)
     print("Visualizing Predictions: UNTRAINED Model")
@@ -56,7 +56,7 @@ def visualize_untrained_model():
         mlp_ratio=MLP_RATIO,
         dropout=DROPOUT
     )
-    model = model.to(DEVICE)
+    model = model.to(device)
     model.eval()
     
     print("Loading validation data...")
@@ -65,8 +65,8 @@ def visualize_untrained_model():
     print("Generating predictions...")
     with torch.no_grad():
         images, masks = next(iter(val_loader))
-        images = images.to(DEVICE)
-        masks = masks.to(DEVICE)
+        images = images.to(device)
+        masks = masks.to(device)
         
         logits = model(images)
         predictions = torch.argmax(logits, dim=1)
@@ -109,14 +109,14 @@ def visualize_untrained_model():
     print("=" * 60)
 
 
-def visualize_trained_model(checkpoint_path: str):
+def visualize_trained_model(checkpoint_path: str, device):
     """Visualize predictions from a trained model."""
     print("=" * 60)
     print("Visualizing Predictions: TRAINED Model")
     print("=" * 60)
     
     print(f"\nLoading model from: {checkpoint_path}")
-    model = load_model_checkpoint(checkpoint_path)
+    model = load_model_checkpoint(checkpoint_path, device)
     
     print("Loading validation data...")
     _, val_loader = create_dataloaders(DATA_DIR, IMAGE_SIZE, BATCH_SIZE)
@@ -124,8 +124,8 @@ def visualize_trained_model(checkpoint_path: str):
     print("Generating predictions...")
     with torch.no_grad():
         images, masks = next(iter(val_loader))
-        images = images.to(DEVICE)
-        masks = masks.to(DEVICE)
+        images = images.to(device)
+        masks = masks.to(device)
         
         logits = model(images)
         predictions = torch.argmax(logits, dim=1)
@@ -176,12 +176,21 @@ def main():
         default=None,
         help="Path to model checkpoint (if not provided, uses untrained model)"
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cpu", "cuda", "mps"],
+        help="Device to use for visualization (default: auto-detect)"
+    )
     args = parser.parse_args()
     
+    device = parse_device(args.device)
+    
     if args.checkpoint:
-        visualize_trained_model(args.checkpoint)
+        visualize_trained_model(args.checkpoint, device)
     else:
-        visualize_untrained_model()
+        visualize_untrained_model(device)
 
 
 if __name__ == "__main__":
