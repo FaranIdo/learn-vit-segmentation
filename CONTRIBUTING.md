@@ -6,50 +6,50 @@ Thank you for your interest in contributing! This project aims to provide a clea
 
 ### 1. Fork and Clone
 
-"""bash
+```bash
 git clone https://github.com/yourusername/vis-tutorial.git
 cd vis-tutorial
-"""
+```
 
 ### 2. Create Virtual Environment
 
-"""bash
+```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-"""
+```
 
 ### 3. Install Dependencies
 
-"""bash
+```bash
 pip install -r requirements.txt
-"""
+```
 
 ### 4. Download Dataset
 
-"""bash
+```bash
 bash data/setup_dataset.sh
-"""
+```
 
 ### 5. Verify Setup
 
-"""bash
+```bash
 python examples/sanity_check.py
-"""
+```
 
 ## Running Tests
 
 Run the test suite to ensure everything works:
 
-"""bash
+```bash
 python -m pytest tests/ -v
-"""
+```
 
 Run specific test files:
 
-"""bash
+```bash
 python -m pytest tests/test_encoder.py -v
 python -m pytest tests/test_decoder.py -v
-"""
+```
 
 ## Code Style Guidelines
 
@@ -93,14 +93,14 @@ This project follows clean code principles:
 
 ### 1. Create a Branch
 
-"""bash
+```bash
 git checkout -b feature/your-feature-name
-"""
+```
 
 For bug fixes:
-"""bash
+```bash
 git checkout -b fix/bug-description
-"""
+```
 
 ### 2. Make Your Changes
 
