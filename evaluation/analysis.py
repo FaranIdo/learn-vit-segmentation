@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import binary_dilation, binary_erosion
@@ -228,3 +229,120 @@ def plot_boundary_analysis(image: torch.Tensor, mask: torch.Tensor, prediction: 
     plt.tight_layout()
 
     return fig, boundary_acc, interior_acc
+
+
+def calculate_confidence_from_logits(logits: torch.Tensor) -> torch.Tensor:
+    probs = F.softmax(logits, dim=1)
+    max_probs, _ = torch.max(probs, dim=1)
+    return max_probs
+
+
+def calculate_entropy(logits: torch.Tensor) -> torch.Tensor:
+    probs = F.softmax(logits, dim=1)
+    log_probs = torch.log(probs + 1e-10)
+    entropy = -torch.sum(probs * log_probs, dim=1)
+    return entropy
+
+
+def analyze_confidence_by_correctness(all_logits: list, all_predictions: list, all_masks: list) -> dict:
+    correct_confidences = []
+    incorrect_confidences = []
+
+    for logits, pred, mask in zip(all_logits, all_predictions, all_masks):
+        confidence = calculate_confidence_from_logits(logits.unsqueeze(0)).squeeze(0)
+        correct_mask = pred == mask
+        
+        correct_confidences.extend(confidence[correct_mask].cpu().numpy().tolist())
+        incorrect_confidences.extend(confidence[~correct_mask].cpu().numpy().tolist())
+
+    return {
+        "correct_mean": np.mean(correct_confidences) if correct_confidences else 0.0,
+        "correct_std": np.std(correct_confidences) if correct_confidences else 0.0,
+        "incorrect_mean": np.mean(incorrect_confidences) if incorrect_confidences else 0.0,
+        "incorrect_std": np.std(incorrect_confidences) if incorrect_confidences else 0.0,
+        "correct_count": len(correct_confidences),
+        "incorrect_count": len(incorrect_confidences),
+    }
+
+
+def analyze_uncertainty_zones(all_logits: list, all_predictions: list, all_masks: list, uncertainty_threshold: float = 0.5) -> dict:
+    total_uncertain = 0
+    uncertain_correct = 0
+    total_certain = 0
+    certain_correct = 0
+
+    for logits, pred, mask in zip(all_logits, all_predictions, all_masks):
+        confidence = calculate_confidence_from_logits(logits.unsqueeze(0)).squeeze(0)
+        correct_mask = pred == mask
+        
+        uncertain_mask = confidence < uncertainty_threshold
+        certain_mask = ~uncertain_mask
+        
+        total_uncertain += uncertain_mask.sum().item()
+        uncertain_correct += (correct_mask & uncertain_mask).sum().item()
+        
+        total_certain += certain_mask.sum().item()
+        certain_correct += (correct_mask & certain_mask).sum().item()
+
+    return {
+        "uncertain_accuracy": uncertain_correct / total_uncertain if total_uncertain > 0 else 0.0,
+        "certain_accuracy": certain_correct / total_certain if total_certain > 0 else 0.0,
+        "uncertain_pixels": total_uncertain,
+        "certain_pixels": total_certain,
+        "uncertainty_threshold": uncertainty_threshold,
+    }
+
+
+def plot_confidence_analysis(image: torch.Tensor, mask: torch.Tensor, prediction: torch.Tensor, logits: torch.Tensor, sample_idx: int, iou: float) -> tuple[plt.Figure, float, float]:
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    
+    img = denormalize_image(image)
+    mask_np = mask.cpu().numpy()
+    pred_np = prediction.cpu().numpy()
+    
+    confidence = calculate_confidence_from_logits(logits.unsqueeze(0)).squeeze(0).cpu().numpy()
+    entropy = calculate_entropy(logits.unsqueeze(0)).squeeze(0).cpu().numpy()
+    
+    correct_mask = pred_np == mask_np
+    incorrect_mask = ~correct_mask
+    
+    axes[0, 0].imshow(img)
+    axes[0, 0].set_title("Original Image")
+    axes[0, 0].axis("off")
+    
+    axes[0, 1].imshow(mask_to_rgb(mask, 2))
+    axes[0, 1].set_title("Ground Truth")
+    axes[0, 1].axis("off")
+    
+    axes[0, 2].imshow(mask_to_rgb(prediction, 2))
+    axes[0, 2].set_title("Prediction")
+    axes[0, 2].axis("off")
+    
+    conf_plot = axes[1, 0].imshow(confidence, cmap="RdYlGn", vmin=0, vmax=1)
+    axes[1, 0].set_title(f"Confidence Map\n(Mean: {confidence.mean():.3f})")
+    axes[1, 0].axis("off")
+    plt.colorbar(conf_plot, ax=axes[1, 0], fraction=0.046)
+    
+    entropy_plot = axes[1, 1].imshow(entropy, cmap="hot")
+    axes[1, 1].set_title(f"Uncertainty (Entropy)\n(Mean: {entropy.mean():.3f})")
+    axes[1, 1].axis("off")
+    plt.colorbar(entropy_plot, ax=axes[1, 1], fraction=0.046)
+    
+    confidence_error_map = np.zeros((*mask_np.shape, 3), dtype=np.uint8)
+    confidence_error_map[correct_mask & (confidence > 0.5)] = [0, 255, 0]
+    confidence_error_map[correct_mask & (confidence <= 0.5)] = [255, 255, 0]
+    confidence_error_map[incorrect_mask & (confidence > 0.5)] = [255, 0, 0]
+    confidence_error_map[incorrect_mask & (confidence <= 0.5)] = [255, 165, 0]
+    
+    axes[1, 2].imshow(confidence_error_map)
+    axes[1, 2].set_title("Confidence vs Correctness\nGreen: Correct+High | Red: Wrong+High\nYellow: Correct+Low | Orange: Wrong+Low")
+    axes[1, 2].axis("off")
+    
+    correct_conf_mean = confidence[correct_mask].mean() if correct_mask.any() else 0
+    incorrect_conf_mean = confidence[incorrect_mask].mean() if incorrect_mask.any() else 0
+    
+    fig.suptitle(f"Sample {sample_idx} - IoU: {iou:.3f} | Conf(Correct): {correct_conf_mean:.3f} | Conf(Wrong): {incorrect_conf_mean:.3f}", fontsize=14)
+    plt.tight_layout()
+    
+    return fig, correct_conf_mean, incorrect_conf_mean
+

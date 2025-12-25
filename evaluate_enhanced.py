@@ -11,7 +11,7 @@ from tqdm import tqdm
 from vit.segmenter import Segmenter
 from data.oxford_pets import create_test_loader
 from training.metrics import SegmentationMetrics
-from evaluation.analysis import calculate_sample_iou, select_samples_by_iou, plot_error_grid, plot_error_map_comparison, analyze_by_size, analyze_boundary_vs_interior, plot_boundary_analysis
+from evaluation.analysis import calculate_sample_iou, select_samples_by_iou, plot_error_grid, plot_error_map_comparison, analyze_by_size, analyze_boundary_vs_interior, plot_boundary_analysis, analyze_confidence_by_correctness, analyze_uncertainty_zones, plot_confidence_analysis
 from config import DEVICE, IMAGE_SIZE, PATCH_SIZE, EMBED_DIM, NUM_LAYERS, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, BATCH_SIZE, DATA_DIR
 
 
@@ -55,6 +55,7 @@ def collect_all_predictions(model, test_loader, device):
     all_predictions = []
     all_ious = []
     all_mask_areas = []
+    all_logits = []
 
     with torch.no_grad():
         pbar = tqdm(test_loader, desc="Collecting predictions")
@@ -69,6 +70,7 @@ def collect_all_predictions(model, test_loader, device):
                 img = images[i].cpu()
                 mask = masks[i].cpu()
                 pred = preds[i].cpu()
+                logit = logits[i].cpu()
 
                 iou = calculate_sample_iou(pred, mask, class_id=1)
                 mask_area = (mask == 1).sum().item()
@@ -78,8 +80,9 @@ def collect_all_predictions(model, test_loader, device):
                 all_predictions.append(pred)
                 all_ious.append(iou)
                 all_mask_areas.append(mask_area)
+                all_logits.append(logit)
 
-    return all_images, all_masks, all_predictions, all_ious, all_mask_areas
+    return all_images, all_masks, all_predictions, all_ious, all_mask_areas, all_logits
 
 
 def evaluate_with_metrics(model, test_loader, device, num_classes):
@@ -197,10 +200,73 @@ def run_phase2_analysis(all_images, all_masks, all_predictions, all_ious, select
     return boundary_stats
 
 
+def run_phase3_analysis(all_images, all_masks, all_predictions, all_logits, all_ious, selected, output_dir):
+    print("\n" + "=" * 70)
+    print("PHASE 3: CONFIDENCE & UNCERTAINTY ANALYSIS")
+    print("=" * 70)
+
+    os.makedirs(os.path.join(output_dir, "confidence_analysis"), exist_ok=True)
+
+    print("\n1. Analyzing confidence by correctness...")
+    conf_stats = analyze_confidence_by_correctness(all_logits, all_predictions, all_masks)
+
+    print("\n   Confidence Analysis Results:")
+    print("   " + "-" * 60)
+    print(f"   Correct Predictions:")
+    print(f"      Mean Confidence: {conf_stats['correct_mean']:.4f}")
+    print(f"      Std Confidence: {conf_stats['correct_std']:.4f}")
+    print(f"      Count: {conf_stats['correct_count']:,}")
+    print(f"   Incorrect Predictions:")
+    print(f"      Mean Confidence: {conf_stats['incorrect_mean']:.4f}")
+    print(f"      Std Confidence: {conf_stats['incorrect_std']:.4f}")
+    print(f"      Count: {conf_stats['incorrect_count']:,}")
+    print(f"   Confidence Gap: {conf_stats['correct_mean'] - conf_stats['incorrect_mean']:.4f}")
+    print("   " + "-" * 60)
+
+    print("\n2. Analyzing uncertainty zones...")
+    uncertainty_stats = analyze_uncertainty_zones(all_logits, all_predictions, all_masks, uncertainty_threshold=0.5)
+
+    print("\n   Uncertainty Zone Results:")
+    print("   " + "-" * 60)
+    print(f"   High Uncertainty (confidence < 0.5):")
+    print(f"      Accuracy: {uncertainty_stats['uncertain_accuracy']:.4f}")
+    print(f"      Pixels: {uncertainty_stats['uncertain_pixels']:,}")
+    print(f"   Low Uncertainty (confidence >= 0.5):")
+    print(f"      Accuracy: {uncertainty_stats['certain_accuracy']:.4f}")
+    print(f"      Pixels: {uncertainty_stats['certain_pixels']:,}")
+    print(f"   Accuracy Gap: {uncertainty_stats['certain_accuracy'] - uncertainty_stats['uncertain_accuracy']:.4f}")
+    print("   " + "-" * 60)
+
+    print("\n3. Creating confidence visualizations...")
+    all_selected = selected["worst"][:3] + selected["median"][:3] + selected["best"][:3]
+
+    for idx, sample_idx in enumerate(all_selected):
+        iou = all_ious[sample_idx]
+        fig, correct_conf, incorrect_conf = plot_confidence_analysis(
+            all_images[sample_idx], 
+            all_masks[sample_idx], 
+            all_predictions[sample_idx], 
+            all_logits[sample_idx],
+            sample_idx, 
+            iou
+        )
+        output_path = os.path.join(
+            output_dir, 
+            "confidence_analysis", 
+            f"sample_{sample_idx:04d}_iou_{iou:.3f}_conf_c_{correct_conf:.3f}_w_{incorrect_conf:.3f}.png"
+        )
+        plt.savefig(output_path, dpi=100, bbox_inches="tight")
+        plt.close(fig)
+
+    print(f"   Saved {len(all_selected)} confidence analysis visualizations")
+
+    return conf_stats, uncertainty_stats
+
+
 def main():
     parser = argparse.ArgumentParser(description="Enhanced Evaluation with Deep Analysis")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint")
-    parser.add_argument("--phase", type=str, default="1", choices=["1", "2", "all"], help="Which phase to run (1, 2, or all)")
+    parser.add_argument("--phase", type=str, default="1", choices=["1", "2", "3", "all"], help="Which phase to run (1, 2, 3, or all)")
     args = parser.parse_args()
 
     output_dir = get_output_dir(args.checkpoint)
@@ -246,19 +312,20 @@ def main():
             iou = test_metrics[f"iou_class_{c}"]
             print(f"  Class {c} ({class_name}): {iou:.4f}")
 
-        if args.phase in ["1", "all"]:
+        if args.phase in ["1", "2", "3", "all"]:
             print("\nCollecting all predictions for detailed analysis...")
-            all_images, all_masks, all_predictions, all_ious, all_mask_areas = collect_all_predictions(model, test_loader, DEVICE)
+            all_images, all_masks, all_predictions, all_ious, all_mask_areas, all_logits = collect_all_predictions(model, test_loader, DEVICE)
 
+        if args.phase in ["1", "all"]:
             run_phase1_analysis(all_images, all_masks, all_predictions, all_ious, all_mask_areas, output_dir)
 
         if args.phase in ["2", "all"]:
-            if args.phase == "2":
-                print("\nCollecting all predictions for detailed analysis...")
-                all_images, all_masks, all_predictions, all_ious, all_mask_areas = collect_all_predictions(model, test_loader, DEVICE)
-
             selected = select_samples_by_iou(all_ious, num_best=5, num_median=5, num_worst=5)
             run_phase2_analysis(all_images, all_masks, all_predictions, all_ious, selected, output_dir)
+
+        if args.phase in ["3", "all"]:
+            selected = select_samples_by_iou(all_ious, num_best=5, num_median=5, num_worst=5)
+            run_phase3_analysis(all_images, all_masks, all_predictions, all_logits, all_ious, selected, output_dir)
 
         print("\n" + "=" * 70)
         print("✓ Enhanced evaluation complete!")
