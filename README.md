@@ -540,12 +540,12 @@ tensorboard --logdir=checkpoints
 If you use this code in your research or find it helpful, please consider citing:
 
 ```bibtex
-@misc{vit-segmentation-tutorial,
+@misc{learn-vit-segmentation,
   author = {Ido Faran},
   title = {Vision Transformer for Semantic Segmentation - Tutorial},
   year = {2025},
   publisher = {GitHub},
-  url = {https://github.com/yourusername/vis-tutorial}
+  url = {https://github.com/FaranIdo/learn-vit-segmentation}
 }
 ```
 
