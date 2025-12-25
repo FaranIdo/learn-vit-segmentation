@@ -145,9 +145,11 @@ Timing:
 ✓ Saved best model (mIoU: 0.7456)
 """
 
-## Final Evaluation
+## Evaluation
 
-After completing all training and hyperparameter tuning, evaluate your best model on the official test set:
+### Basic Evaluation
+
+After completing training, evaluate your model on the test set:
 
 """bash
 python evaluate.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth
@@ -172,6 +174,87 @@ Per-Class IoU:
   Class 1 (pet): 0.6644
 ======================================================================
 """
+
+### Enhanced Evaluation (Deep Analysis)
+
+For comprehensive model analysis beyond basic metrics:
+
+"""bash
+# Run all analysis phases
+python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase all
+
+# Or run individual phases
+python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 1  # Error visualization
+python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 2  # Boundary analysis
+python evaluate_enhanced.py --checkpoint checkpoints/baseline_2024-12-23_22-45-30/best_model.pth --phase 3  # Confidence analysis
+"""
+
+**Analysis Phases:**
+
+**Phase 1: Error Visualization & Size-Based Analysis**
+- Error grids showing best, median, and worst predictions
+- Individual error maps with False Positive/False Negative overlays
+- Performance analysis by object size (small vs medium vs large)
+- Outputs: `evaluation/error_grid_*.png`, `evaluation/error_maps/`
+
+**Phase 2: Boundary vs Interior Analysis**
+- Measures accuracy on object boundaries vs interior regions
+- Uses morphological operations (3-pixel boundary extraction)
+- Identifies edge detection weaknesses
+- Outputs: `evaluation/boundary_analysis/`
+
+**Phase 3: Confidence & Uncertainty Analysis**
+- Analyzes prediction confidence from softmax probabilities
+- Compares confidence in correct vs incorrect predictions
+- Generates confidence heatmaps and uncertainty visualizations
+- Outputs: `evaluation/confidence_analysis/`
+
+**Results Location:**
+
+All evaluation outputs are saved to:
+"""
+checkpoints/baseline_2024-12-23_22-45-30/evaluation/
+├── evaluation_results.txt          # Full text output (metrics + analysis)
+├── error_grid_best.png            # 5 best predictions
+├── error_grid_median.png          # 5 median predictions
+├── error_grid_worst.png           # 5 worst predictions
+├── error_maps/                    # Individual error visualizations
+│   └── sample_*.png
+├── boundary_analysis/             # Boundary vs interior analysis
+│   └── sample_*_boundary.png
+└── confidence_analysis/           # Confidence heatmaps
+    └── sample_*_conf_*.png
+"""
+
+**Key Insights You'll Get:**
+
+1. **Performance Distribution:** See your best and worst cases
+2. **Size Bias:** How well does the model handle small vs large objects?
+3. **Boundary Quality:** What's the accuracy gap between edges and interior? (typically 20-30%)
+4. **Confidence Calibration:** Is the model confident when correct and uncertain when wrong?
+5. **Error Patterns:** Visual identification of common failure modes
+
+**Example Findings:**
+"""
+Size-Based Analysis:
+  Small objects (< 5000px): 54.9% IoU
+  Large objects (> 15000px): 81.5% IoU
+  Gap: 26.6%
+
+Boundary Analysis:
+  Boundary accuracy: 63.3%
+  Interior accuracy: 91.7%
+  Gap: 28.4%
+
+Confidence Analysis:
+  Correct predictions: 97.3% confidence
+  Incorrect predictions: 83.2% confidence
+  Gap: 14.1%
+"""
+
+**Documentation:**
+
+After running enhanced evaluation, you can generate a comprehensive analysis report documenting all findings. See `docs/model_analysis_report.md` for an example report structure.
 
 ## Configuration
 
@@ -273,6 +356,9 @@ Comprehensive documentation available in `docs/`:
 - **Training:** Losses, metrics, augmentation, learning rate schedules
 - **Visualization:** Predictions, attention maps, ImageNet normalization
 - **Monitoring:** Time estimates, TensorBoard, learning curve interpretation
+- **Evaluation:**
+  - `boundary_analysis.md` - Detailed explanation of boundary extraction and analysis
+  - `model_analysis_report.md` - Example comprehensive training and evaluation report
 
 ## Performance
 
