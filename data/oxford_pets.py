@@ -94,8 +94,8 @@ def create_dataloaders(root: str, image_size: int, batch_size: int):
     train_dataset = OxfordPetsDataset(root, "train", image_size, transform=train_transform)
     val_dataset = OxfordPetsDataset(root, "val", image_size, transform=val_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
 
     return train_loader, val_loader
 
@@ -103,5 +103,5 @@ def create_dataloaders(root: str, image_size: int, batch_size: int):
 def create_test_loader(root: str, image_size: int, batch_size: int):
     test_transform = create_val_transforms(image_size)
     test_dataset = OxfordPetsDataset(root, "test", image_size, transform=test_transform)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
     return test_loader
