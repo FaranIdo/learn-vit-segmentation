@@ -10,7 +10,7 @@ A clean, educational implementation of Vision Transformer for semantic segmentat
 
 🤖 **Using Cursor, Claude, or GitHub Copilot?**
 
-This project is designed for AI-assisted learning! See [`vit_tutorial_plan.md`](vit_tutorial_plan.md) for:
+This project is designed for AI-assisted learning! See [`AI_LEARNING_GUIDE.md`](AI_LEARNING_GUIDE.md) for:
 - Comprehensive project overview and architecture
 - Recommended exploration flow for AI assistants
 - Example questions to ask (e.g., "How does patch embedding work?")
