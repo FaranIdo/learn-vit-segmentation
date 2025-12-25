@@ -26,12 +26,6 @@ This tutorial uses the **Oxford-IIIT Pets** dataset for semantic segmentation.
 - Pixel-level segmentation masks (3 classes: pet, background, border)
 - For this tutorial, we simplify to **binary segmentation**: pet vs. background
 
-**Why this dataset?**
-- **Educational size** - Small enough to train quickly on consumer hardware (~2-3 hours on M-series Mac)
-- **Real-world complexity** - Varied poses, breeds, lighting conditions, occlusions
-- **Quality annotations** - Accurate pixel-level masks for learning segmentation
-- **Well-established** - Standard benchmark for comparing approaches
-
 **Dataset Statistics:**
 - **Total images:** 7,349
 - **Image resolution:** Variable (resized to 224×224 for training)
@@ -41,19 +35,6 @@ This tutorial uses the **Oxford-IIIT Pets** dataset for semantic segmentation.
 - **Test samples:** 3,669 (held-out evaluation set)
 
 **Task:** Given an image of a pet, predict which pixels belong to the pet (foreground) and which are background.
-
-**Example:**
-```
-Input: [cat sitting on couch]
-Output: Binary mask showing cat pixels = 1, couch/background = 0
-```
-
-**Attribution:**
-> O. M. Parkhi, A. Vedaldi, A. Zisserman, C. V. Jawahar  
-> "Cats and Dogs"  
-> IEEE Conference on Computer Vision and Pattern Recognition, 2012
-
-**Download:** The dataset is automatically downloaded via `data/setup_dataset.sh` (~775 MB total).
 
 ## Quick Start
 
@@ -498,9 +479,9 @@ tensorboard --logdir=checkpoints
 
 ## References
 
-- **ViT Paper:** "An Image is Worth 16x16 Words" (Dosovitskiy et al., 2020)
-- **Segmentation:** "Segmenter: Transformer for Semantic Segmentation" (Strudel et al., 2021)
-- **Dataset:** Oxford-IIIT Pets (Parkhi et al., 2012)
+- **ViT Paper:** [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929) (Dosovitskiy et al., ICLR 2021)
+- **Segmentation Paper:** [Segmenter: Transformer for Semantic Segmentation](https://arxiv.org/abs/2105.05633) (Strudel et al., ICCV 2021)
+- **Oxford-IIIT Pets Dataset:** [Cats and Dogs](https://www.robots.ox.ac.uk/~vgg/data/pets/) (Parkhi et al., CVPR 2012)
 
 ## Citation
 
