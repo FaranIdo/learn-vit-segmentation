@@ -1,5 +1,9 @@
 # Vision Transformer (ViT) for Semantic Segmentation - Tutorial
 
+![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.1+-red.svg)
+
 A clean, educational implementation of Vision Transformer for semantic segmentation, built from scratch with PyTorch.
 
 ## Features
@@ -421,7 +425,35 @@ tensorboard --logdir=checkpoints
 - **Segmentation:** "Segmenter: Transformer for Semantic Segmentation" (Strudel et al., 2021)
 - **Dataset:** Oxford-IIIT Pets (Parkhi et al., 2012)
 
+## Citation
+
+If you use this code in your research or find it helpful, please consider citing:
+
+```bibtex
+@misc{vit-segmentation-tutorial,
+  author = {Ido Faran},
+  title = {Vision Transformer for Semantic Segmentation - Tutorial},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/yourusername/vis-tutorial}
+}
+```
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Setting up the development environment
+- Running tests
+- Code style guidelines
+- Submitting pull requests
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
 ## License
 
-Educational project for learning Vision Transformers.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This is an educational project for learning Vision Transformers. Feel free to use, modify, and distribute for any purpose.
 
