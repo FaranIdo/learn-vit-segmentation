@@ -6,6 +6,19 @@
 
 A clean, educational implementation of Vision Transformer for semantic segmentation, built from scratch with PyTorch.
 
+## Learning with AI Assistants
+
+🤖 **Using Cursor, Claude, or GitHub Copilot?**
+
+This project is designed for AI-assisted learning! See [`vit_tutorial_plan.md`](vit_tutorial_plan.md) for:
+- Comprehensive project overview and architecture
+- Recommended exploration flow for AI assistants
+- Example questions to ask (e.g., "How does patch embedding work?")
+- Learning paths for beginner → intermediate → advanced
+- Tips for experimenting and extending the code
+
+Perfect for understanding Vision Transformers through interactive dialogue with AI coding assistants.
+
 ## Features
 
 - **Vision Transformer Encoder** - Patch embedding, positional encoding, multi-head self-attention
