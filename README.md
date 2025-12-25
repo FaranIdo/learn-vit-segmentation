@@ -510,21 +510,5 @@ If you use this code in your research or find it helpful, please consider citing
 }
 ```
 
-## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Setting up the development environment
-- Running tests
-- Code style guidelines
-- Submitting pull requests
-
-## Code of Conduct
-
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-This is an educational project for learning Vision Transformers. Feel free to use, modify, and distribute for any purpose.
 
