@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, "/Users/ido.faran/personal/vis-tutorial")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
 from data import OxfordPetsDataset, create_dataloaders

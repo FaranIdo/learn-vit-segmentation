@@ -226,7 +226,7 @@ flowchart TB
 ## Project Structure - Where to Find Things
 
 ```
-vis-tutorial/
+learn-vit-segmentation/
 ├── vit/
 │   ├── __init__.py
 │   ├── patch_embed.py        # Patch embedding layer

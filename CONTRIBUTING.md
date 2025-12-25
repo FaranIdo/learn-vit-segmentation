@@ -7,8 +7,8 @@ Thank you for your interest in contributing! This project aims to provide a clea
 ### 1. Fork and Clone
 
 ```bash
-git clone https://github.com/yourusername/vis-tutorial.git
-cd vis-tutorial
+git clone https://github.com/FaranIdo/learn-vit-segmentation.git
+cd learn-vit-segmentation
 ```
 
 ### 2. Create Virtual Environment
