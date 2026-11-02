@@ -12,7 +12,11 @@ class DualOutput:
         self.terminal = terminal
     
     def write(self, message):
-        self.terminal.write(message)
+        try:
+            self.terminal.write(message)
+        except UnicodeEncodeError:
+            # Handle Windows console encoding issues
+            self.terminal.write(message.encode('ascii', 'replace').decode('ascii'))
         self.file.write(message)
         self.file.flush()
     
